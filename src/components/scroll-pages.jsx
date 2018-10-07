@@ -39,7 +39,6 @@ class ScrollPages extends React.Component {
     }
 
     this.setHeight = this.setHeight.bind(this)
-    this.scrollToPage = this.scrollToPage.bind(this)
     this.handleScroll = this.handleScroll.bind(this)
 
     this.pagesRefs = props.children.map(child => {
@@ -47,15 +46,15 @@ class ScrollPages extends React.Component {
     })
   }
 
+  shouldComponentUpdate(nextProps, nextState, nextContext) {
+    return nextState.offset !== this.state.offset || nextState.height !== this.state.height
+  }
+
   componentWillMount() {
     const delay = this.props.speed * 1000
     this.detectScrollDebounced = debounce(function (down) {
       this.handleScroll.apply(this, [down])
     }, delay)
-  }
-
-  shouldComponentUpdate(nextProps, nextState, nextContext) {
-    return nextState.offset !== this.state.offset
   }
 
   componentDidMount() {
@@ -76,16 +75,6 @@ class ScrollPages extends React.Component {
   setHeight() {
     const height = window.innerHeight
     this.setState(() => ({ height }))
-  }
-
-  scrollToPage(scrollY, current) {
-    const offset = (current * this.state.height) * -1
-    console.log('%c scrollToPage', 'color: magenta', scrollY, current, offset)
-    this.setState(() => ({
-      lastY: scrollY,
-      current,
-      offset,
-    }))
   }
 
   handleScroll(down) {
