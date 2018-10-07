@@ -66,9 +66,7 @@ class ScrollPages extends React.Component {
         }
       }, false)
     })
-    window.addEventListener('resize', event => {
-      this.setHeight()
-    })
+    window.addEventListener('resize', this.setHeight)
     this.setHeight()
   }
 
