@@ -3,13 +3,13 @@ import PropTypes from 'prop-types'
 import styled from 'react-emotion'
 
 const debounce = (fn, delay) => {
-  let timer = null
-  return function () {
+  let timer = 0
+  return function debouncedFn() {
     let context = this, args = arguments
-    clearTimeout(timer)
-    timer = setTimeout(function () {
+    if ((timer + delay - Date.now()) < 0) {
       fn.apply(context, args)
-    }, delay)
+      timer = Date.now();
+    }
   }
 }
 
@@ -24,8 +24,8 @@ const StyledScrollPage = styled('div')`
   height: 100vh;
 `
 
-export const ScrollPage = ({ children }) => (
-  <StyledScrollPage className="scroll-page">{children}</StyledScrollPage>
+export const ScrollPage = ({ children, ...others }) => (
+  <StyledScrollPage className="scroll-page" {...others}>{children}</StyledScrollPage>
 )
 
 class ScrollPages extends React.Component {
@@ -35,10 +35,6 @@ class ScrollPages extends React.Component {
     this.state = {
       current: 0,
       height: 0,
-      lastY: 0,
-      interval: 0,
-      pages: props.children.length,
-      end: 0,
       offset: 0,
     }
 
@@ -46,18 +42,30 @@ class ScrollPages extends React.Component {
     this.scrollToPage = this.scrollToPage.bind(this)
     this.handleScroll = this.handleScroll.bind(this)
 
-    this.pagesRef = React.createRef()
+    this.pagesRefs = props.children.map(child => {
+      return React.createRef()
+    })
   }
 
   componentWillMount() {
-    this.handleScrollDebounced = debounce(function () {
-      this.handleScroll.apply(this)
-    }, 300)
+    this.detectScrollDebounced = debounce(function (down) {
+      this.handleScroll.apply(this, [down])
+    }, 1000)
+  }
+
+  shouldComponentUpdate(nextProps, nextState, nextContext) {
+    return nextState.offset !== this.state.offset
   }
 
   componentDidMount() {
-    console.log('did mount')
-    window.addEventListener('scroll', () => this.handleScrollDebounced())
+    this.pagesRefs.forEach(ref => {
+      ref.current.addEventListener('wheel', event => {
+        const i = parseInt(event.currentTarget.dataset.index)
+        if (i === this.state.current) {
+          this.detectScrollDebounced(event.deltaY > 0)
+        }
+      }, false)
+    })
     window.addEventListener('resize', event => {
       this.setHeight()
     })
@@ -67,64 +75,44 @@ class ScrollPages extends React.Component {
   setHeight() {
     const height = window.innerHeight
     const interval = (height / this.props.speed) / 100
-    const end = interval * this.state.pages
-    this.setState(() => ({ height, interval, end }), () => console.log('set height state', this.state))
+    this.setState(() => ({ height, interval }))
   }
 
-  scrollToPage(page) {
-
+  scrollToPage(scrollY, current) {
+    const offset = (current * this.state.height) * -1
+    console.log('%c scrollToPage', 'color: magenta', scrollY, current, offset)
+    this.setState(() => ({
+      lastY: scrollY,
+      current,
+      offset,
+    }))
   }
 
-  handleScroll(event) {
-    console.log('------------')
-    const y = window.pageYOffset || document.documentElement.scrollTop
-    console.log('%c Y', 'color: inherit', y, this.state.end)
-    const scrollY = y
-    // console.log('%c scrollY', 'color: inherit', scrollY)
+  handleScroll(down) {
     let current = this.state.current
-    if (scrollY > this.state.lastY) {
-      const next = this.state.interval * (current + 1)
-      if (scrollY > next) {
-        const n = current + 1
-        if (n < this.props.children.length) {
-          console.log('%c next', 'color: lime')
-          current = n
-        }
+    if (down) {
+      const n = current + 1
+      if (n < this.props.children.length) {
+        current = n
       }
     } else {
-      const previous = this.state.interval * (current + 1)
-      if (scrollY < previous) {
-        const p = current - 1
-        if (p >= 0) {
-          console.log('%c previous', 'color: yellow')
-          current = p
-        }
+      const p = current - 1
+      if (p >= 0) {
+        current = p
       }
     }
-
-    if (y > this.state.end) {
-      // event.preventDefault()
-      const offset = (this.state.height - y) * -1
-      console.log('%c END offset', 'color: orange', offset)
-      this.setState(() => ({
-        lastY: y,
-        offset,
-      }))
-    } else {
-      const offset = (current * this.state.height) * -1
-      this.setState(() => ({
-        lastY: y,
-        current,
-        offset,
-      }))
-    }
+    const offset = (current * this.state.height) * -1
+    this.setState(() => ({ current, offset }))
   }
 
   render() {
     const { children } = this.props
     return (
-      <StyledScrollPages innerRef={this.pagesRef} className="scroll-pages" offset={this.state.offset}>
-        {children}
+      <StyledScrollPages className="scroll-pages" offset={this.state.offset}>
+        {children.map((child, index) => {
+          const { children, ...others } = child.props
+          return <ScrollPage key={index} data-index={index} innerRef={this.pagesRefs[index]} {...others}>{children}</ScrollPage>
+        })}
       </StyledScrollPages>
     )
   }
