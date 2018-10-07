@@ -18,7 +18,7 @@ const StyledScrollPages = styled('div')`
   position: relative; 
   touch-action: none; 
   transform: translate3d(0px, ${({ offset }) => offset}px, 0px); 
-  transition: all 700ms ease 0s;
+  transition: all ${({ speed }) => speed}ms ease 0s;
 `
 const StyledScrollPage = styled('div')`
   height: 100vh;
@@ -48,9 +48,10 @@ class ScrollPages extends React.Component {
   }
 
   componentWillMount() {
+    const delay = this.props.speed * 1000
     this.detectScrollDebounced = debounce(function (down) {
       this.handleScroll.apply(this, [down])
-    }, 1000)
+    }, delay)
   }
 
   shouldComponentUpdate(nextProps, nextState, nextContext) {
@@ -74,8 +75,7 @@ class ScrollPages extends React.Component {
 
   setHeight() {
     const height = window.innerHeight
-    const interval = (height / this.props.speed) / 100
-    this.setState(() => ({ height, interval }))
+    this.setState(() => ({ height }))
   }
 
   scrollToPage(scrollY, current) {
@@ -107,8 +107,9 @@ class ScrollPages extends React.Component {
 
   render() {
     const { children } = this.props
+    const speed = this.props.speed * 700
     return (
-      <StyledScrollPages className="scroll-pages" offset={this.state.offset}>
+      <StyledScrollPages className="scroll-pages" speed={speed} offset={this.state.offset}>
         {children.map((child, index) => {
           const { children, ...others } = child.props
           return <ScrollPage key={index} data-index={index} innerRef={this.pagesRefs[index]} {...others}>{children}</ScrollPage>
