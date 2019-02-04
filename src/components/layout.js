@@ -42,10 +42,10 @@ const Layout = ({ children }) => (
           </Helmet>
           <Header sticky={true} breakpoint="small">
             <a href="/">Link 1</a>
-            <a href="#">Link 2</a>
-            <a href="#">Lorem ipsum dolor sit amet, consectetuer adipiscing elit.</a>
-            <a href="#">Lorem ipsum dolor sit amet, consectetuer adipiscing elit.</a>
-            <a href="#">Lorem ipsum dolor sit amet, consectetuer adipiscing elit.</a>
+            <a href="/page-2">Link 2</a>
+            <a href="/">Lorem ipsum dolor sit amet, consectetuer adipiscing elit.</a>
+            <a href="/page-2">Lorem ipsum dolor sit amet, consectetuer adipiscing elit.</a>
+            <a href="/">Lorem ipsum dolor sit amet, consectetuer adipiscing elit.</a>
           </Header>
           {children}
         </>

@@ -20,6 +20,7 @@ const StyledScrollPages = styled('div')`
   transform: translate3d(0px, ${({ offset }) => offset}px, 0px); 
   transition: all ${({ speed }) => speed}ms ease 0s;
 `
+
 const StyledScrollPage = styled('div')`
   height: 100vh;
 `
@@ -50,7 +51,7 @@ class ScrollPages extends React.Component {
     return nextState.offset !== this.state.offset || nextState.height !== this.state.height
   }
 
-  componentWillMount() {
+  UNSAFE_componentWillMount() {
     const delay = this.props.speed * 1000
     this.detectScrollDebounced = debounce(function (down) {
       this.handleScroll.apply(this, [down])
@@ -76,6 +77,7 @@ class ScrollPages extends React.Component {
   }
 
   handleScroll(down) {
+    console.log('handle scroll', down)
     let current = this.state.current
     if (down) {
       const n = current + 1
@@ -89,17 +91,30 @@ class ScrollPages extends React.Component {
       }
     }
     const offset = (current * this.state.height) * -1
-    this.setState(() => ({ current, offset }))
+    this.setState(() => ({ current, offset }), () => console.log(this.state))
   }
 
   render() {
     const { children } = this.props
     const speed = this.props.speed * 700
     return (
-      <StyledScrollPages className="scroll-pages" speed={speed} offset={this.state.offset}>
+      <StyledScrollPages
+        className="scroll-pages"
+        speed={speed}
+        offset={this.state.offset}
+      >
         {children.map((child, index) => {
           const { children, ...others } = child.props
-          return <ScrollPage key={index} data-index={index} innerRef={this.pagesRefs[index]} {...others}>{children}</ScrollPage>
+          return (
+            <ScrollPage
+              key={index}
+              data-index={index}
+              innerRef={this.pagesRefs[index]}
+              {...others}
+            >
+              {children}
+            </ScrollPage>
+          )
         })}
       </StyledScrollPages>
     )
